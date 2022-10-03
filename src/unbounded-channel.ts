@@ -70,7 +70,7 @@ export class UnboundedChannel<T> implements Channel<T> {
 	}
 
 	get length(): number {
-		this.#receivers = this.#receivers.filter(d => !d.isCanceled)
+		this.#receivers = this.#receivers.filter((d) => !d.isCanceled)
 
 		return this.#buffer.length - this.#receivers.length
 	}

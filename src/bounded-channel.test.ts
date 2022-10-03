@@ -10,7 +10,10 @@ describe('BoundedChannel', () => {
 		const c = new BoundedChannel<number>(0)
 
 		let i = 0
-		setTimeout(async () => { i++; await c.recv() }, 1);
+		setTimeout(() => {
+			i++
+			c.recv()
+		}, 1)
 
 		await c.send(42)
 		expect(i).toBe(1)
@@ -20,7 +23,10 @@ describe('BoundedChannel', () => {
 		const c = new BoundedChannel<number>(0)
 
 		let i = 0
-		setTimeout(() => { i++; c.close() }, 1)
+		setTimeout(() => {
+			i++
+			c.close()
+		}, 1)
 
 		await expect(() => c.send(42)).rejects.toThrow(ClosedError)
 		expect(i).toBe(1)
@@ -30,13 +36,10 @@ describe('BoundedChannel', () => {
 		const c = new BoundedChannel<string>(0)
 		let p = ''
 
-		const done = new Promise<void>(resolve => {
-			setTimeout(async () => {
-				await c.recv().then(v => p += v)
-				await c.recv().then(v => p += v)
-				resolve()
-			}, 1);
-		})
+		const done = Promise.all([
+			c.recv().then((v) => (p += v)),
+			c.recv().then((v) => (p += v)),
+		])
 
 		await c.send('jonathan')
 		await c.send(' joestar')

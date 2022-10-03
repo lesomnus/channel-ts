@@ -1,9 +1,9 @@
-import { CanceledErrof } from './errors'
+import { CanceledError } from './errors'
 
-export class Deferred<T> implements Promise<T>{
+export class Deferred<T> implements Promise<T> {
 	constructor() {
-		let resolve_ = (value: T) => { }
-		let reject_ = () => { }
+		let resolve_ = (value: T) => {}
+		let reject_ = () => {}
 
 		this.#promise = new Promise((resolve, reject) => {
 			resolve_ = resolve
@@ -15,21 +15,28 @@ export class Deferred<T> implements Promise<T>{
 	}
 
 	then<TResult1 = T, TResult2 = never>(
-		onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-		onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+		onfulfilled?:
+			| ((value: T) => TResult1 | PromiseLike<TResult1>)
+			| null
+			| undefined,
+		onrejected?:
+			| ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
+			| null
+			| undefined
 	): Promise<TResult1 | TResult2> {
 		return this.#promise.then(onfulfilled, onrejected)
 	}
 
 	catch<TResult = never>(
-		onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined
+		onrejected?:
+			| ((reason: unknown) => TResult | PromiseLike<TResult>)
+			| null
+			| undefined
 	): Promise<T | TResult> {
 		return this.#promise.catch(onrejected)
 	}
 
-	finally(
-		onfinally?: (() => void) | null | undefined
-	): Promise<T> {
+	finally(onfinally?: (() => void) | null | undefined): Promise<T> {
 		return this.#promise.finally(onfinally)
 	}
 
@@ -37,14 +44,14 @@ export class Deferred<T> implements Promise<T>{
 		this.#resolve(value)
 	}
 
-	reject(reason?: any): void {
+	reject(reason?: unknown): void {
 		this.#reject(reason)
 	}
 
-	readonly [Symbol.toStringTag] = "Deferred"
+	readonly [Symbol.toStringTag] = 'Deferred'
 
 	#resolve: (value: T) => void
-	#reject: (reason?: any) => void
+	#reject: (reason?: unknown) => void
 	#promise: Promise<T>
 }
 
@@ -52,7 +59,7 @@ export class CancelableDeferred<T> extends Deferred<T> {
 	constructor(onCanceled?: () => void) {
 		super()
 
-		this.#onCanceled = onCanceled || (() => { })
+		this.#onCanceled = onCanceled ?? (() => {})
 	}
 
 	resolve(value: T): void {
@@ -60,7 +67,7 @@ export class CancelableDeferred<T> extends Deferred<T> {
 		super.resolve(value)
 	}
 
-	reject(reason?: any): void {
+	reject(reason?: unknown): void {
 		this.#throwIfCanceled()
 		super.reject(reason)
 	}
@@ -78,10 +85,10 @@ export class CancelableDeferred<T> extends Deferred<T> {
 
 	#throwIfCanceled() {
 		if (this.#isCanceled) {
-			throw new CanceledErrof()
+			throw new CanceledError()
 		}
 	}
 
-	#isCanceled: boolean = false
+	#isCanceled = false
 	#onCanceled: () => void
 }

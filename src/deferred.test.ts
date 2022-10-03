@@ -1,12 +1,12 @@
 import { Deferred, CancelableDeferred } from './deferred'
-import { CanceledErrof } from './errors'
+import { CanceledError } from './errors'
 
 describe('Deferred', () => {
 	test('resolve', async () => {
-		let word = ""
+		let word = ''
 
 		const d = new Deferred<string>()
-		d.then(v => word = v)
+		d.then((v) => (word = v))
 		d.resolve('foo')
 
 		await expect(d).resolves.toBe('foo')
@@ -14,10 +14,10 @@ describe('Deferred', () => {
 	})
 
 	test('reject', async () => {
-		let word = ""
+		let word = ''
 
 		const d = new Deferred<string>()
-		d.catch(v => word = v)
+		d.catch((v) => (word = v as string))
 		d.reject('bar')
 
 		await expect(d).rejects.toBe('bar')
@@ -25,10 +25,10 @@ describe('Deferred', () => {
 	})
 
 	test('finally', async () => {
-		let word = ""
+		let word = ''
 
 		const d = new Deferred<string>()
-		d.finally(() => word = 'baz')
+		d.finally(() => (word = 'baz'))
 		d.resolve('rick')
 
 		await expect(d).resolves.toBe('rick')
@@ -37,7 +37,7 @@ describe('Deferred', () => {
 
 	test('await', async () => {
 		const d = new Deferred<void>()
-		setTimeout(() => d.resolve(), 0);
+		setTimeout(() => d.resolve(), 0)
 
 		await d
 	})
@@ -45,7 +45,7 @@ describe('Deferred', () => {
 
 describe('CancelableDeferred', () => {
 	test('cancel', () => {
-		let i = 0;
+		let i = 0
 
 		const d = new CancelableDeferred(() => i++)
 		d.cancel()
@@ -58,14 +58,15 @@ describe('CancelableDeferred', () => {
 		const d = new CancelableDeferred<void>()
 		d.cancel()
 
-		expect(() => d.resolve()).toThrow(CanceledErrof)
-		expect(() => d.reject()).toThrow(CanceledErrof)
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		expect(() => d.resolve()).toThrow(CanceledError)
+		expect(() => d.reject()).toThrow(CanceledError)
 	})
 
 	test('then', async () => {
 		const d = new CancelableDeferred<string>()
 		d.resolve('foo')
 
-		expect(d.then(v => v)).resolves.toBe('foo')
+		await expect(d.then((v) => v)).resolves.toBe('foo')
 	})
 })

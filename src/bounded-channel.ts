@@ -1,8 +1,8 @@
-import { ClosedError } from "./errors";
-import { CancelableDeferred } from "./deferred";
-import { Channel } from "./channel";
+import { ClosedError } from './errors'
+import { CancelableDeferred } from './deferred'
+import { Channel } from './channel'
 
-export class BoundedChannel<T> implements Channel<T>{
+export class BoundedChannel<T> implements Channel<T> {
 	constructor(capacity: number) {
 		if (capacity < 0) {
 			throw new Error('capacity cannot be negative')
@@ -20,10 +20,9 @@ export class BoundedChannel<T> implements Channel<T>{
 				continue
 			}
 
-
 			d.resolve()
 			if (this.#capacity === 0) {
-				return new Promise<T>(resolve => {
+				return new Promise<T>((resolve) => {
 					d.then(() => resolve(this.#buffer.shift()!))
 				})
 			}
@@ -47,7 +46,6 @@ export class BoundedChannel<T> implements Channel<T>{
 			return Promise.resolve()
 		}
 
-
 		while (this.#receivers.length > 0) {
 			const d = this.#receivers.shift()!
 			if (d.isCanceled) {
@@ -59,9 +57,11 @@ export class BoundedChannel<T> implements Channel<T>{
 		}
 
 		const d = new CancelableDeferred<void>()
-		d.then(() => this.#buffer.push(value)).catch(err => {
+		d.then(() => this.#buffer.push(value)).catch((err) => {
 			if (!(err instanceof ClosedError)) {
-				throw new Error('logic error: expected a ClosedError but was ' + err)
+				throw new Error(
+					'logic error: expected a ClosedError but was ' + err
+				)
 			}
 		})
 		this.#senders.push(d)
@@ -107,10 +107,12 @@ export class BoundedChannel<T> implements Channel<T>{
 	}
 
 	get length(): number {
-		this.#receivers = this.#receivers.filter(d => !d.isCanceled)
-		this.#senders = this.#senders.filter(d => !d.isCanceled)
+		this.#receivers = this.#receivers.filter((d) => !d.isCanceled)
+		this.#senders = this.#senders.filter((d) => !d.isCanceled)
 
-		return this.#buffer.length + this.#senders.length - this.#receivers.length
+		return (
+			this.#buffer.length + this.#senders.length - this.#receivers.length
+		)
 	}
 
 	#throwIfClosed() {
@@ -119,7 +121,7 @@ export class BoundedChannel<T> implements Channel<T>{
 		}
 	}
 
-	#isClosed: boolean = false
+	#isClosed = false
 	#buffer: T[] = []
 	#receivers: CancelableDeferred<T>[] = []
 	#senders: CancelableDeferred<void>[] = []

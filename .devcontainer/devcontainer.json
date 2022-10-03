@@ -8,6 +8,7 @@
 	},
 	"extensions": [
 		"orta.vscode-jest",
+		"dbaeumer.vscode-eslint",
 		"streetsidesoftware.code-spell-checker"
 	]
 }

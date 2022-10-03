@@ -14,7 +14,10 @@ class Op<T> {
 }
 
 class RecvOp<T> extends Op<T> {
-	constructor(channel: Channel<T>, onCommit?: (err: any | null, value: T) => void) {
+	constructor(
+		channel: Channel<T>,
+		onCommit?: (err: unknown | null, value: T) => void
+	) {
 		super(channel)
 		this.onCommit = onCommit
 	}
@@ -26,17 +29,22 @@ class RecvOp<T> extends Op<T> {
 	execute(): Promise<void> {
 		const d = this.channel.recv()
 		d.then(
-			v => this.onCommit?.(null, v),
-			e => this.onCommit?.(e, undefined as T))
+			(v) => this.onCommit?.(null, v),
+			(e) => this.onCommit?.(e, undefined as T)
+		)
 
 		return d as Promise<void>
 	}
 
-	onCommit?: (err: any | null, value: T) => void
+	onCommit?: (err: unknown | null, value: T) => void
 }
 
 class SendOp<T> extends Op<T> {
-	constructor(channel: Channel<T>, value: T, onCommit?: (err?: any) => void) {
+	constructor(
+		channel: Channel<T>,
+		value: T,
+		onCommit?: (err?: unknown) => void
+	) {
 		super(channel)
 
 		this.onCommit = onCommit
@@ -51,24 +59,35 @@ class SendOp<T> extends Op<T> {
 		const d = this.channel.send(this.value)
 		d.then(
 			() => this.onCommit?.(),
-			e => this.onCommit?.(e))
+			(e) => this.onCommit?.(e)
+		)
 
 		return d
 	}
 
-	onCommit?: (err?: any) => void
+	onCommit?: (err?: unknown) => void
 	value: T
 }
 
-export function recv<T>(channel: Channel<T>, onCommit?: (value: T) => void): RecvOp<T> {
+export function recv<T>(
+	channel: Channel<T>,
+	onCommit?: (err: unknown | null, value: T) => void
+): RecvOp<T> {
 	return new RecvOp<T>(channel, onCommit)
 }
 
-export function send<T>(channel: Channel<T>, value: T, onCommit?: () => void): SendOp<T> {
+export function send<T>(
+	channel: Channel<T>,
+	value: T,
+	onCommit?: (err?: unknown) => void
+): SendOp<T> {
 	return new SendOp<T>(channel, value, onCommit)
 }
 
-export async function select<T extends readonly any[]>(ops: [...({ [K in keyof T]: (RecvOp<T[K]> | SendOp<T[K]>) })], fallback?: () => void): Promise<void> {
+export async function select<T extends readonly unknown[]>(
+	ops: [...{ [K in keyof T]: RecvOp<T[K]> | SendOp<T[K]> }],
+	fallback?: () => void
+): Promise<void> {
 	for (const op of ops) {
 		if (op.isReady()) {
 			if (op.onCommit === undefined) {
@@ -79,7 +98,7 @@ export async function select<T extends readonly any[]>(ops: [...({ [K in keyof T
 		}
 	}
 
-	const ds: CancelableDeferred<any>[] = []
+	const ds: CancelableDeferred<unknown>[] = []
 	for (const op of ops) {
 		if (op.onCommit === undefined) {
 			op.onCommit = fallback
@@ -87,13 +106,15 @@ export async function select<T extends readonly any[]>(ops: [...({ [K in keyof T
 
 		const d = op.execute()
 		if (!(d instanceof CancelableDeferred)) {
-			throw new Error('logic error: expected that the operation will be deferred')
+			throw new Error(
+				'logic error: expected that the operation will be deferred'
+			)
 		}
 
 		ds.push(d)
 	}
 
-	await Promise.race(ds).catch(() => { })
+	await Promise.race(ds).catch(() => {})
 	for (const d of ds) {
 		d.cancel()
 	}

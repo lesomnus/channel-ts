@@ -1,11 +1,11 @@
-export class CanceledErrof extends Error {
+export class CanceledError extends Error {
 	constructor() {
-		super('canceled');
+		super('canceled')
 	}
 }
 
 export class ClosedError extends Error {
 	constructor() {
-		super('closed');
+		super('closed')
 	}
 }

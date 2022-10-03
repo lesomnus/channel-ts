@@ -1,0 +1,5 @@
+.eslintrc.js
+jest.config.js
+rollup.config.js
+coverage
+dist

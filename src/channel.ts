@@ -13,8 +13,4 @@ export interface Sender<T> extends ChannelBase {
 	send(value: T): Promise<void>
 }
 
-export interface Channel<T> extends Receiver<T>, Sender<T> {
-
-}
-
-
+export interface Channel<T> extends Receiver<T>, Sender<T> {}
