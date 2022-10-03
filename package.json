@@ -1,0 +1,30 @@
+{
+  "name": "channel",
+  "version": "0.0.1",
+  "description": "TS implementation of Go channel",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lesomnus/channel-js.git"
+  },
+  "keywords": [
+    "channel"
+  ],
+  "author": {
+    "name": "Seunghyun Hwang",
+    "email": "lesomnus@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/lesomnus/channel-js/issues"
+  },
+  "homepage": "https://github.com/lesomnus/channel-js#readme",
+  "devDependencies": {
+    "@types/jest": "^29.1.1",
+    "ts-jest": "^29.0.3",
+    "typescript": "^4.8.4"
+  }
+}

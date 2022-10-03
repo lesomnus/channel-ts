@@ -1,0 +1,13 @@
+{
+	"name": "channel-js",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"settings": {
+		"cSpell.diagnosticLevel": "Hint"
+	},
+	"extensions": [
+		"orta.vscode-jest",
+		"streetsidesoftware.code-spell-checker"
+	]
+}
