@@ -8,9 +8,7 @@ describe('select', () => {
 		const c2 = new UnboundedChannel<string>()
 
 		let i = 0
-		setTimeout(() => {
-			i++
-		}, 1)
+		setTimeout(() => i++, 1)
 
 		await select([recv(c1), send(c2, 'foo', () => (i = 36))])
 		expect(i).toBe(36)
