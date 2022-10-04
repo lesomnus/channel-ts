@@ -13,9 +13,9 @@ TypeScript implementation of [Go channel](https://go.dev/ref/spec#Channel_types)
 ### Send/Recv
 
 ```ts
-import { BoundedChannel } from '@lesomnus/channel'
+import { Chan } from '@lesomnus/channel'
 
-const c = new BoundedChannel<number>(0)
+const c = new Chan<number>(0)
 
 setTimeout(async () => {
 	// Blocked until recv() since the size of the buffer is 0.
@@ -32,11 +32,11 @@ answer === 42 // true
 ### Select
 
 ```ts
-import { UnboundedChannel } from '@lesomnus/channel'
+import { UnChan } from '@lesomnus/channel'
 import { recv, send, select } from '@lesomnus/channel'
 
-const c1 = new BoundedChannel<number>(0)
-const c2 = new BoundedChannel<number>(0)
+const c1 = new Chan<number>(0)
+const c2 = new Chan<number>(0)
 
 setTimeout(async () => { await c2.send(42) }, 100)
 

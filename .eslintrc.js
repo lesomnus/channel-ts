@@ -18,5 +18,11 @@ module.exports = {
 		'@typescript-eslint/no-unused-vars': 'off',
 		'@typescript-eslint/no-empty-function': 'off',
 		'@typescript-eslint/no-floating-promises': 'off',
+		'@typescript-eslint/no-unnecessary-condition': ['warn', {
+			allowConstantLoopConditions: true
+		}],
+		'@typescript-eslint/no-misused-promises': ['error', {
+			checksVoidReturn: false
+		}]
 	},
 }

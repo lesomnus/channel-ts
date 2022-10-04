@@ -2,6 +2,24 @@ import { BoundedChannel } from './bounded-channel'
 import { ClosedError } from './errors'
 
 describe('BoundedChannel', () => {
+	test('from existing buffer', async () => {
+		const c = BoundedChannel.from([42, 36])
+
+		expect(c.capacity).toBe(2)
+		await expect(c.recv()).resolves.toBe(42)
+		await expect(c.recv()).resolves.toBe(36)
+	})
+
+	test('from existing buffer with capacity', async () => {
+		const c = BoundedChannel.from([42, 36], 3)
+
+		expect(c.capacity).toBe(3)
+		await c.send(3.14)
+		await expect(c.recv()).resolves.toBe(42)
+		await expect(c.recv()).resolves.toBe(36)
+		await expect(c.recv()).resolves.toBe(3.14)
+	})
+
 	it('cannot have negative capacity', () => {
 		expect(() => new BoundedChannel(-1)).toThrow()
 	})

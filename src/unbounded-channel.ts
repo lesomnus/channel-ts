@@ -3,10 +3,18 @@ import { CancelableDeferred } from './deferred'
 import { Channel } from './channel'
 
 export class UnboundedChannel<T> implements Channel<T> {
+	static from<T>(buffer: T[]): UnboundedChannel<T> {
+		const c = new UnboundedChannel<T>()
+		c.#buffer = buffer
+
+		return c
+	}
+
 	recv(): Promise<T> {
 		this.#throwIfClosed()
 
 		if (this.#buffer.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return Promise.resolve(this.#buffer.shift()!)
 		}
 
@@ -20,6 +28,7 @@ export class UnboundedChannel<T> implements Channel<T> {
 		this.#throwIfClosed()
 
 		while (this.#receivers.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const d = this.#receivers.shift()!
 			if (d.isCanceled) {
 				continue
@@ -81,7 +90,7 @@ export class UnboundedChannel<T> implements Channel<T> {
 		}
 	}
 
-	#isClosed: boolean = false
+	#isClosed = false
 	#buffer: T[] = []
 	#receivers: CancelableDeferred<T>[] = []
 }

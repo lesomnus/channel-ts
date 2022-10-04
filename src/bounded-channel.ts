@@ -3,6 +3,13 @@ import { CancelableDeferred } from './deferred'
 import { Channel } from './channel'
 
 export class BoundedChannel<T> implements Channel<T> {
+	static from<T>(buffer: T[], capacity?: number): BoundedChannel<T> {
+		const c = new BoundedChannel<T>(capacity ?? buffer.length)
+		c.#buffer = buffer
+
+		return c
+	}
+
 	constructor(capacity: number) {
 		if (capacity < 0) {
 			throw new Error('capacity cannot be negative')
@@ -60,7 +67,7 @@ export class BoundedChannel<T> implements Channel<T> {
 		d.then(() => this.#buffer.push(value)).catch((err) => {
 			if (!(err instanceof ClosedError)) {
 				throw new Error(
-					'logic error: expected a ClosedError but was ' + err
+					`logic error: expected a ClosedError but was ${String(err)}`
 				)
 			}
 		})
