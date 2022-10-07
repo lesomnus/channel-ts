@@ -3,6 +3,19 @@ import { UnboundedChannel } from './unbounded-channel'
 import { BoundedChannel } from './bounded-channel'
 
 export class Chan<T> implements Channel<T> {
+	static from<T>(buffer: T[]): Chan<T>
+	// eslint-disable-next-line @typescript-eslint/unified-signatures
+	static from<T>(buffer: T[], capacity: number): Chan<T>
+	static from<T>(buffer: T[], capacity?: number): Chan<T> {
+		if (capacity === undefined) {
+			return UnboundedChannel.from(buffer)
+		} else if (capacity < buffer.length) {
+			throw RangeError('capacity must be equal or grater than length of buffer')
+		} else {
+			return BoundedChannel.from(buffer, capacity)
+		}
+	}
+
 	/**
 	 * Create a channel that is a buffer with no size limit.
 	 *

@@ -115,11 +115,7 @@ describe('channel', () =>
 		test('ping pong', async () => {
 			const c = make<number>(0)
 
-			await expect(
-				Promise.all([c.send(42), c.recv()])
-			).resolves.toStrictEqual([undefined, 42])
-			await expect(
-				Promise.all([c.recv(), c.send(36)])
-			).resolves.toStrictEqual([36, undefined])
+			await expect(Promise.all([c.send(42), c.recv()])).resolves.toStrictEqual([undefined, 42])
+			await expect(Promise.all([c.recv(), c.send(36)])).resolves.toStrictEqual([36, undefined])
 		})
 	}))

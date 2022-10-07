@@ -21,11 +21,7 @@ describe('select', () => {
 			const c2 = new UnboundedChannel<string>()
 
 			let sent = ''
-			await select([
-				recv(c1),
-				send(c2, 'foo', () => (sent = 'foo')),
-				send(c2, 'bar', () => (sent = 'bar')),
-			])
+			await select([recv(c1), send(c2, 'foo', () => (sent = 'foo')), send(c2, 'bar', () => (sent = 'bar'))])
 
 			expect(c1.length).toBe(0) // It will be -1 if it is not canceled.
 			expect(c2.length).toBe(1) // It will be  2 if it is not canceled.
@@ -44,7 +40,7 @@ describe('select', () => {
 
 			let i = 0
 			await select([
-				recv(c1),
+				recv(c1), //
 				recv(c2, () => (i = 1)),
 				recv(c2, () => (i = 2)),
 			])
@@ -68,11 +64,7 @@ describe('select', () => {
 			}, 1)
 
 			let i = 0
-			await select([
-				recv(c1),
-				recv(c2, () => (i = 1)),
-				recv(c2, () => (i = 2)),
-			])
+			await select([recv(c1), recv(c2, () => (i = 1)), recv(c2, () => (i = 2))])
 
 			expect(c1.length).toBe(0) // It will be -1 if it is not canceled.
 			expect(c2.length).toBe(2) // It will be  1 if it is not canceled.
@@ -93,7 +85,7 @@ describe('select', () => {
 
 			let i = 0
 			await select([
-				recv(c1),
+				recv(c1), //
 				recv(c2, () => (i = 1)),
 				recv(c2, () => (i = 2)),
 			])
@@ -114,7 +106,7 @@ describe('select', () => {
 
 			let sent = ''
 			await select([
-				recv(c1),
+				recv(c1), //
 				send(c2, 'foo', () => (sent = 'foo')),
 				send(c2, 'bar', () => (sent = 'bar')),
 			])
@@ -163,7 +155,7 @@ describe('select', () => {
 
 			let sent = ''
 			await select([
-				recv(c1),
+				recv(c1), //
 				send(c2, 'foo', () => (sent = 'foo')),
 				send(c2, 'bar', () => (sent = 'bar')),
 			])

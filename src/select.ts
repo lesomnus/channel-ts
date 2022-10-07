@@ -31,11 +31,7 @@ class Op<T> {
 }
 
 class RecvOp<T> extends Op<T> {
-	constructor(
-		channel: Channel<T>,
-		onCommit?: ((ok: true, value: T) => void) &
-			((ok: false, value: null) => void)
-	) {
+	constructor(channel: Channel<T>, onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)) {
 		super(channel)
 		this.onCommit = onCommit
 	}
@@ -54,16 +50,11 @@ class RecvOp<T> extends Op<T> {
 		return d as Promise<void>
 	}
 
-	onCommit?: ((ok: true, value: T) => void) &
-		((ok: false, value: null) => void)
+	onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)
 }
 
 class SendOp<T> extends Op<T> {
-	constructor(
-		channel: Channel<T>,
-		value: T,
-		onCommit?: (ok: boolean) => void
-	) {
+	constructor(channel: Channel<T>, value: T, onCommit?: (ok: boolean) => void) {
 		super(channel)
 
 		this.onCommit = onCommit
@@ -109,8 +100,7 @@ class SendOp<T> extends Op<T> {
  */
 export function recv<T>(
 	channel: Channel<T>,
-	onCommit?: ((ok: true, value: T) => void) &
-		((ok: false, value: null) => void)
+	onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)
 ): RecvOp<T> {
 	return new RecvOp<T>(channel, onCommit)
 }
@@ -135,11 +125,7 @@ export function recv<T>(
  * @param value - Element to add.
  * @param onCommit - Invoked on operation settled.
  */
-export function send<T>(
-	channel: Channel<T>,
-	value: T,
-	onCommit?: (ok: boolean) => void
-): SendOp<T> {
+export function send<T>(channel: Channel<T>, value: T, onCommit?: (ok: boolean) => void): SendOp<T> {
 	return new SendOp<T>(channel, value, onCommit)
 }
 
@@ -189,9 +175,7 @@ export async function select<T extends readonly unknown[]>(
 	for (const op of ops) {
 		const d = op.execute(ctx)
 		if (!(d instanceof CancelableDeferred)) {
-			throw new Error(
-				'logic error: expected that the operation will be deferred'
-			)
+			throw new Error('logic error: expected that the operation will be deferred')
 		}
 
 		// Make it more reasonable or rename class (e.g. synthetic promise? promise hook?).

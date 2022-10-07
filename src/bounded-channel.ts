@@ -3,7 +3,8 @@ import { CancelableDeferred } from './deferred'
 import { Channel } from './channel'
 
 export class BoundedChannel<T> implements Channel<T> {
-	static from<T>(buffer: T[], capacity?: number): BoundedChannel<T> {
+	static from<T>(iterable: Iterable<T> | ArrayLike<T>, capacity?: number): BoundedChannel<T> {
+		const buffer = Array.from(iterable)
 		const c = new BoundedChannel<T>(capacity ?? buffer.length)
 		c.#buffer = buffer
 
@@ -66,9 +67,7 @@ export class BoundedChannel<T> implements Channel<T> {
 		const d = new CancelableDeferred<void>()
 		d.then(() => this.#buffer.push(value)).catch((err) => {
 			if (!(err instanceof ClosedError)) {
-				throw new Error(
-					`logic error: expected a ClosedError but was ${String(err)}`
-				)
+				throw new Error(`logic error: expected a ClosedError but was ${String(err)}`)
 			}
 		})
 		this.#senders.push(d)
@@ -117,9 +116,7 @@ export class BoundedChannel<T> implements Channel<T> {
 		this.#receivers = this.#receivers.filter((d) => !d.isCanceled)
 		this.#senders = this.#senders.filter((d) => !d.isCanceled)
 
-		return (
-			this.#buffer.length + this.#senders.length - this.#receivers.length
-		)
+		return this.#buffer.length + this.#senders.length - this.#receivers.length
 	}
 
 	#throwIfClosed() {

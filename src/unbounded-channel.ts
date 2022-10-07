@@ -3,9 +3,9 @@ import { CancelableDeferred } from './deferred'
 import { Channel } from './channel'
 
 export class UnboundedChannel<T> implements Channel<T> {
-	static from<T>(buffer: T[]): UnboundedChannel<T> {
+	static from<T>(iterable: Iterable<T> | ArrayLike<T>): UnboundedChannel<T> {
 		const c = new UnboundedChannel<T>()
-		c.#buffer = buffer
+		c.#buffer = Array.from(iterable)
 
 		return c
 	}
