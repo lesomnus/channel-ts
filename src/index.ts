@@ -1,4 +1,4 @@
 export * from './errors'
 export * from './channel'
-export * from './unbounded-channel'
-export * from './bounded-channel'
+export * from './chan'
+export * from './select'

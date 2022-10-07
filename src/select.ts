@@ -88,6 +88,25 @@ class SendOp<T> extends Op<T> {
 	value: T
 }
 
+/**
+ * Removes the first element from the given channel's buffer.
+ *
+ * @remarks
+ * It must be used with {@link select}.
+ * When the data is sent, `onCommit` is invoked with `ok` true and `value` received data.
+ * If `channel` is closed, `onCommit` is invoked with `ok` false and `value` null.
+ *
+ * @example
+ * ```
+ * const c = new Chan<number>()
+ * await select([
+ * 	recv(c, (ok, v)=> ok && console.log('received', v))
+ * ])
+ * ```
+ *
+ * @param channel - Channel to remove element from.
+ * @param onCommit - Invoked on operation settled.
+ */
 export function recv<T>(
 	channel: Channel<T>,
 	onCommit?: ((ok: true, value: T) => void) &
@@ -96,14 +115,55 @@ export function recv<T>(
 	return new RecvOp<T>(channel, onCommit)
 }
 
+/**
+ * Adds an element to th end of given channel's buffer.
+ *
+ * @remarks
+ * It must be used with {@link select}.
+ * When the data is sent, `onCommit` is invoked with `ok` true.
+ * If `channel` is closed, `onCommit` is invoked with `ok` false.
+ *
+ * @example
+ * ```
+ * const c = new Chan<number>()
+ * await select([
+ * 	send(c, 42, (ok)=> ok && console.log('sent'))
+ * ])
+ * ```
+ *
+ * @param channel - Channel to add element to.
+ * @param value - Element to add.
+ * @param onCommit - Invoked on operation settled.
+ */
 export function send<T>(
 	channel: Channel<T>,
 	value: T,
-	onCommit?: (err?: unknown) => void
+	onCommit?: (ok: boolean) => void
 ): SendOp<T> {
 	return new SendOp<T>(channel, value, onCommit)
 }
 
+/**
+ * Waits multiple channel operations.
+ * It is similar to `Promise.race`.
+ *
+ * @remarks
+ * It invokes `fallback` if all operations in `ops` are not ready and the operations are canceled.
+ * If `fallback` is not given and `ops` is empty, it returns immediately unlike Go's select.
+ *
+ * @example
+ * ```
+ * const c1 = new Chan<number>()
+ * const c2 = new Chan<number>()
+ * await select([
+ * 	recv(c1, (ok, v)=> ok && console.log('received', v))
+ * 	send(c2, 42, (ok)=> ok && console.log('sent'))
+ * ])
+ * ```
+ *
+ * @param ops - Operations to wait.
+ * @param fallback - Invoked if all operations in `ops` are not ready.
+ */
 export async function select<T extends readonly unknown[]>(
 	ops: [...{ [K in keyof T]: RecvOp<T[K]> | SendOp<T[K]> }],
 	fallback?: () => void
@@ -111,12 +171,14 @@ export async function select<T extends readonly unknown[]>(
 	const ctx = new OpCtx()
 	for (const op of ops) {
 		if (op.isReady()) {
-			if (op.onCommit === undefined) {
-				op.onCommit = fallback
-			}
 			await op.execute(ctx)
 			return
 		}
+	}
+
+	if (fallback !== undefined) {
+		fallback()
+		return
 	}
 
 	const ds: CancelableDeferred<unknown>[] = []
@@ -125,10 +187,6 @@ export async function select<T extends readonly unknown[]>(
 	ctx.beforeTick = cancel
 
 	for (const op of ops) {
-		if (op.onCommit === undefined) {
-			op.onCommit = fallback
-		}
-
 		const d = op.execute(ctx)
 		if (!(d instanceof CancelableDeferred)) {
 			throw new Error(

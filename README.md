@@ -1,4 +1,4 @@
-# channel-ts
+# channel
 
 TypeScript implementation of [Go channel](https://go.dev/ref/spec#Channel_types).
 
@@ -15,7 +15,7 @@ TypeScript implementation of [Go channel](https://go.dev/ref/spec#Channel_types)
 ```ts
 import { Chan } from '@lesomnus/channel'
 
-const c = new Chan<number>(0)
+const c = new Chan<number>(0) // Bounded channel with 0 size buffer.
 
 setTimeout(async () => {
 	// Blocked until recv() since the size of the buffer is 0.
@@ -27,6 +27,15 @@ const answer = await c.recv()
 
 // After 100ms...
 answer === 42 // true
+```
+```go
+/* Golang equivalent. */
+
+c := make(chan int)
+
+go func(){ c <- 42 }()
+
+answer := <- c
 ```
 
 ### Select
@@ -48,4 +57,17 @@ await select([
 
 // This blocks forever because the receive from c1 is effectively cancelled.
 await c1.send(36)
+```
+```go
+/* Golang equivalent. */
+
+c1 := make(chan int)
+c2 := make(chan int)
+
+go func(){ c2 <- 42 }()
+
+select {
+	case v := <- c1: fmt.Println("c1 received", v)
+	case v := <- c2: fmt.Println("c2 received", v)
+}
 ```

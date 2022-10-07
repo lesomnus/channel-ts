@@ -6,7 +6,10 @@ module.exports = {
 		tsconfigRootDir: __dirname,
 		project: ['./tsconfig.eslint.json'],
 	},
-	plugins: ['@typescript-eslint'],
+	plugins: [
+		'@typescript-eslint',
+		'eslint-plugin-tsdoc'
+	],
 	extends: [
 		'eslint:recommended',
 		'plugin:@typescript-eslint/recommended',
@@ -15,6 +18,7 @@ module.exports = {
 		'prettier',
 	],
 	rules: {
+		'tsdoc/syntax': 'warn',
 		'@typescript-eslint/no-unused-vars': 'off',
 		'@typescript-eslint/no-empty-function': 'off',
 		'@typescript-eslint/no-floating-promises': 'off',

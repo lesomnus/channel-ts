@@ -174,13 +174,26 @@ describe('select', () => {
 		})
 	})
 
-	it('invokes fallback function if callback function is undefined', async () => {
+	it('settles with doing nothing if callback function is not given', async () => {
 		const c = new UnboundedChannel<number>()
 
-		setTimeout(() => c.send(42), 1)
+		let i = 0
+		await select([send(c, 42)], () => i++)
+		expect(i).toBe(0)
+	})
+
+	it('invokes fallback function if all given channels are not ready', async () => {
+		const c1 = new BoundedChannel<number>(0)
+		const c2 = new BoundedChannel<number>(0)
 
 		let i = 0
-		await select([recv(c)], () => i++)
+		await select([send(c1, 42), recv(c2)], () => i++)
+		expect(i).toBe(1)
+	})
+
+	it('invokes fallback function if no channels are given', async () => {
+		let i = 0
+		await select([], () => i++)
 		expect(i).toBe(1)
 	})
 
@@ -192,5 +205,13 @@ describe('select', () => {
 		let i = 0
 		await select([recv(c, () => i++)])
 		expect(i).toBe(1)
+	})
+
+	it('does not raise an error when channel is closed without callback', async () => {
+		const c = new BoundedChannel<number>(0)
+
+		setTimeout(() => c.close(), 1)
+
+		await select([recv(c)])
 	})
 })
