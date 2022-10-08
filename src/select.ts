@@ -167,7 +167,7 @@ export async function select(ops: Op[], fallback?: () => void
 	for (const op of ops) {
 		const d = op.execute(ctx)
 		if (!(d instanceof CancelableDeferred)) {
-			throw new Error('logic error: expected that the operation will be deferred')
+			throw new Error('logic error: expected that the operation is deferred')
 		}
 
 		d.beforeResolve = cancel

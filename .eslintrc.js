@@ -22,6 +22,7 @@ module.exports = {
 		'quotes': ['warn', 'single'],
 		'indent': ['warn', 'tab'],
 		'comma-spacing': ['warn', { 'before': false, 'after': true }],
+		'arrow-spacing': ['warn', { 'before': true, 'after': true }],
 
 		'tsdoc/syntax': 'warn',
 		'@typescript-eslint/no-unused-vars': 'off',

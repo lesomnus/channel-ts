@@ -106,11 +106,11 @@ export class BoundedChannel<T> implements Channel<T> {
 				yield value
 			}
 		} catch (e) {
-			if (!(e instanceof ClosedError)) {
-				throw e
-			} else {
+			if (e instanceof ClosedError) {
 				return
 			}
+
+			throw e
 		}
 	}
 

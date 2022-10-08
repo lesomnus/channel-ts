@@ -20,6 +20,10 @@ describe('BoundedChannel', () => {
 		await expect(c.recv()).resolves.toBe(3.14)
 	})
 
+	test('from existing buffer throws RangeError if capacity is less than buffer length',  () => {
+		expect(() => BoundedChannel.from([42, 36], 1)).toThrow(RangeError)
+	})
+
 	it('cannot have negative capacity', () => {
 		expect(() => new BoundedChannel(-1)).toThrow()
 	})
