@@ -21,6 +21,8 @@ module.exports = {
 		'comma-dangle': ['warn', 'always-multiline'],
 		'quotes': ['warn', 'single'],
 		'indent': ['warn', 'tab'],
+		'object-curly-spacing': ['warn', 'always'],
+		'block-spacing': ['warn', 'always'],
 		'comma-spacing': ['warn', { 'before': false, 'after': true }],
 		'arrow-spacing': ['warn', { 'before': true, 'after': true }],
 
