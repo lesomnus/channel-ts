@@ -45,7 +45,7 @@ answer := <- c
 ### Select
 
 ```ts
-import { UnChan } from '@lesomnus/channel'
+import { Chan } from '@lesomnus/channel'
 import { recv, send, select } from '@lesomnus/channel'
 
 const c1 = new Chan<number>(0)
@@ -80,6 +80,8 @@ select {
 ### Async Iterate
 
 ```ts
+import { Chan } from '@lesomnus/channel'
+
 const c = Chan.from([42, 36], 2)
 
 // Logs
