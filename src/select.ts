@@ -18,30 +18,24 @@ class OpCtx {
 	#done = false
 }
 
-class Op<T> {
-	constructor(channel: Channel<T>) {
-		this.channel = channel
-	}
+interface Op {
+	isReady(): boolean
 
-	protected isReady?(): boolean
-
-	protected execute?(ctx: OpCtx): Promise<void>
-
-	channel: Channel<T>
+	execute(ctx: OpCtx): Promise<void>
 }
 
-class RecvOp<T> extends Op<T> {
+class RecvOp<T> implements Op {
 	constructor(channel: Channel<T>, onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)) {
-		super(channel)
 		this.onCommit = onCommit
+		this.#channel = channel
 	}
 
 	isReady(): boolean {
-		return this.channel.length > 0
+		return this.#channel.length > 0
 	}
 
 	execute(ctx: OpCtx): Promise<void> {
-		const d = this.channel.recv()
+		const d = this.#channel.recv()
 		d.then(
 			(v) => ctx.tick(() => this.onCommit?.(true, v)),
 			() => ctx.tick(() => this.onCommit?.(false, null))
@@ -51,22 +45,23 @@ class RecvOp<T> extends Op<T> {
 	}
 
 	onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)
+
+	#channel: Channel<T>
 }
 
-class SendOp<T> extends Op<T> {
+class SendOp<T> implements Op {
 	constructor(channel: Channel<T>, value: T, onCommit?: (ok: boolean) => void) {
-		super(channel)
-
 		this.onCommit = onCommit
-		this.value = value
+		this.#channel = channel
+		this.#value = value
 	}
 
 	isReady(): boolean {
-		return this.channel.length < this.channel.capacity
+		return this.#channel.length < this.#channel.capacity
 	}
 
 	execute(ctx: OpCtx): Promise<void> {
-		const d = this.channel.send(this.value)
+		const d = this.#channel.send(this.#value)
 		d.then(
 			(v) => ctx.tick(() => this.onCommit?.(true)),
 			() => ctx.tick(() => this.onCommit?.(false))
@@ -76,7 +71,9 @@ class SendOp<T> extends Op<T> {
 	}
 
 	onCommit?: (ok: boolean) => void
-	value: T
+
+	#channel: Channel<T>
+	#value: T
 }
 
 /**
@@ -98,10 +95,7 @@ class SendOp<T> extends Op<T> {
  * @param channel - Channel to remove element from.
  * @param onCommit - Invoked on operation settled.
  */
-export function recv<T>(
-	channel: Channel<T>,
-	onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)
-): RecvOp<T> {
+export function recv<T>(channel: Channel<T>, onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)): Op {
 	return new RecvOp<T>(channel, onCommit)
 }
 
@@ -125,7 +119,7 @@ export function recv<T>(
  * @param value - Element to add.
  * @param onCommit - Invoked on operation settled.
  */
-export function send<T>(channel: Channel<T>, value: T, onCommit?: (ok: boolean) => void): SendOp<T> {
+export function send<T>(channel: Channel<T>, value: T, onCommit?: (ok: boolean) => void): Op {
 	return new SendOp<T>(channel, value, onCommit)
 }
 
@@ -150,9 +144,7 @@ export function send<T>(channel: Channel<T>, value: T, onCommit?: (ok: boolean) 
  * @param ops - Operations to wait.
  * @param fallback - Invoked if all operations in `ops` are not ready.
  */
-export async function select<T extends readonly unknown[]>(
-	ops: [...{ [K in keyof T]: RecvOp<T[K]> | SendOp<T[K]> }],
-	fallback?: () => void
+export async function select(ops: Op[], fallback?: () => void
 ): Promise<void> {
 	const ctx = new OpCtx()
 	for (const op of ops) {

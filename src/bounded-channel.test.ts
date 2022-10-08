@@ -55,7 +55,7 @@ describe('BoundedChannel', () => {
 		let p = ''
 
 		const done = Promise.all([
-			c.recv().then((v) => (p += v)), //
+			c.recv().then((v) => (p += v)),
 			c.recv().then((v) => (p += v)),
 		])
 

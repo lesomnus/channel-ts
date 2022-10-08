@@ -5,7 +5,13 @@ import { Channel } from './channel'
 export class BoundedChannel<T> implements Channel<T> {
 	static from<T>(iterable: Iterable<T> | ArrayLike<T>, capacity?: number): BoundedChannel<T> {
 		const buffer = Array.from(iterable)
-		const c = new BoundedChannel<T>(capacity ?? buffer.length)
+		if (capacity === undefined) {
+			capacity = buffer.length
+		} else if (capacity < buffer.length) {
+			throw new RangeError('capacity must be equal or greater than length of the iterable')
+		}
+
+		const c = new BoundedChannel<T>(capacity)
 		c.#buffer = buffer
 
 		return c

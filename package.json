@@ -6,9 +6,10 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"test": "jest",
-		"format": "prettier --write ./src",
-		"lint": "eslint .",
-		"build": "rollup -c"
+		"lint": "eslint --fix .",
+		"build": "rollup -c",
+		"doc": "npx --yes typedoc src/index.ts",
+		"doc:serve": "npm run doc && npx --yes http-server ./docs"
 	},
 	"repository": {
 		"type": "git",
@@ -32,9 +33,7 @@
 		"@typescript-eslint/eslint-plugin": "^5.38.1",
 		"@typescript-eslint/parser": "^5.38.1",
 		"eslint": "^8.24.0",
-		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-tsdoc": "^0.2.17",
-		"prettier": "2.7.1",
 		"rollup": "^2.79.1",
 		"ts-jest": "^29.0.3",
 		"tslib": "^2.4.0",

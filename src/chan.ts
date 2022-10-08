@@ -2,36 +2,53 @@ import { Channel } from './channel'
 import { UnboundedChannel } from './unbounded-channel'
 import { BoundedChannel } from './bounded-channel'
 
+/**
+ * @typeParam T - Type of element to hold
+ */
 export class Chan<T> implements Channel<T> {
-	static from<T>(buffer: T[]): Chan<T>
+	/**
+	 * Creates a channel with the given data added to it.
+	 *
+	 * @typeParam T - Type of element to hold
+	 * @param iterable - Elements to be added
+	 * @returns Channel with a size-unlimited buffer.
+	 */
+	static from<T>(iterable: Iterable<T> | ArrayLike<T>): Chan<T>
+	/**
+	 * Creates a channel with the given data added to it.
+	 *
+	 * @typeParam T - Type of element to hold
+	 * @param iterable - Elements to be added
+	 * @param capacity - Number of elements channel can hold
+	 * @returns Channel with a size-limited buffer.
+	 *
+	 * @throws RangeError
+	 * Thrown if `capacity` is less than the length of `iterable`.
+	 */
 	// eslint-disable-next-line @typescript-eslint/unified-signatures
-	static from<T>(buffer: T[], capacity: number): Chan<T>
-	static from<T>(buffer: T[], capacity?: number): Chan<T> {
+	static from<T>(iterable: Iterable<T> | ArrayLike<T>, capacity: number): Chan<T>
+	static from<T>(iterable: Iterable<T> | ArrayLike<T>, capacity?: number): Chan<T> {
 		if (capacity === undefined) {
-			return UnboundedChannel.from(buffer)
-		} else if (capacity < buffer.length) {
-			throw RangeError('capacity must be equal or grater than length of buffer')
+			return UnboundedChannel.from(iterable)
 		} else {
-			return BoundedChannel.from(buffer, capacity)
+			return BoundedChannel.from(iterable, capacity)
 		}
 	}
 
 	/**
-	 * Create a channel that is a buffer with no size limit.
+	 * Creates a channel that is a buffer with no size limit.
 	 *
 	 * @remarks
-	 * It is effectively equivalent to {@link ./unbounded-channel#UnboundedChannel}.
 	 * `send` always returns immediately.
 	 *
 	 * @returns Channel with a size-unlimited buffer.
 	 */
 	constructor()
 	/**
-	 * Create a channel with a size-limited buffer.
+	 * Creates a channel with a size-limited buffer.
 	 *
 	 * @remarks
-	 * It is effectively equivalent to {@link BoundedChannel}.
-	 * `send` may be deferred until the buffer is available.
+	 * `send` is deferred until the buffer is available if buffer is full.
 	 *
 	 * @param capacity - Number of elements channel can hold
 	 * @returns Channel with a size-limited buffer.

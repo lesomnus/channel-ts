@@ -40,7 +40,7 @@ describe('select', () => {
 
 			let i = 0
 			await select([
-				recv(c1), //
+				recv(c1),
 				recv(c2, () => (i = 1)),
 				recv(c2, () => (i = 2)),
 			])
@@ -85,7 +85,7 @@ describe('select', () => {
 
 			let i = 0
 			await select([
-				recv(c1), //
+				recv(c1),
 				recv(c2, () => (i = 1)),
 				recv(c2, () => (i = 2)),
 			])
@@ -106,7 +106,7 @@ describe('select', () => {
 
 			let sent = ''
 			await select([
-				recv(c1), //
+				recv(c1),
 				send(c2, 'foo', () => (sent = 'foo')),
 				send(c2, 'bar', () => (sent = 'bar')),
 			])
@@ -155,7 +155,7 @@ describe('select', () => {
 
 			let sent = ''
 			await select([
-				recv(c1), //
+				recv(c1),
 				send(c2, 'foo', () => (sent = 'foo')),
 				send(c2, 'bar', () => (sent = 'bar')),
 			])
