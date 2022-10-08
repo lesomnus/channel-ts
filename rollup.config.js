@@ -5,7 +5,7 @@ export default {
 	input: 'src/index.ts',
 	output: {
 		dir: 'dist',
-		format: 'umd',
+		format: 'cjs',
 		name: 'channel',
 		sourcemap: true,
 	},

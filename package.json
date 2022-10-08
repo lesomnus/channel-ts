@@ -1,8 +1,9 @@
 {
-	"name": "channel",
+	"name": "@lesomnus/channel",
 	"version": "0.0.1",
-	"description": "TypeScript implementation of Go channel",
-	"main": "index.js",
+	"description": "TypeScript implementation of Go Channel",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"scripts": {
 		"test": "jest",
 		"format": "prettier --write ./src",
@@ -38,5 +39,11 @@
 		"ts-jest": "^29.0.3",
 		"tslib": "^2.4.0",
 		"typescript": "^4.8.4"
-	}
+	},
+	"files": [
+		"dist",
+		"src",
+		"!src/*.test.*",
+		"!src/*.spec.*"
+	]
 }

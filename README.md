@@ -1,5 +1,8 @@
 # channel
 
+[![test](https://github.com/lesomnus/channel-ts/actions/workflows/test.yaml/badge.svg)](https://github.com/lesomnus/channel-ts/actions/workflows/test.yaml)
+[![codecov](https://codecov.io/gh/lesomnus/channel-ts/branch/main/graph/badge.svg?token=sZSDd8Zzd7)](https://codecov.io/gh/lesomnus/channel-ts)
+
 TypeScript implementation of [Go channel](https://go.dev/ref/spec#Channel_types).
 
 ## Features
