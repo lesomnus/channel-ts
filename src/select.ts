@@ -178,7 +178,6 @@ export async function select<T extends readonly unknown[]>(
 			throw new Error('logic error: expected that the operation will be deferred')
 		}
 
-		// Make it more reasonable or rename class (e.g. synthetic promise? promise hook?).
 		d.beforeResolve = cancel
 		ds.push(d)
 	}
