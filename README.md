@@ -11,7 +11,15 @@ TypeScript implementation of [Go channel](https://go.dev/ref/spec#Channel_types)
 -   Async iterators
 -   Bounded/Unbounded channels
 
+## Installation
+
+```sh
+$ npm i @lesomnus/channel
+```
+
 ## Usage
+
+Full API can be found in the [docs](https://lesomnus.github.io/channel-ts/).
 
 ### Send/Recv
 
