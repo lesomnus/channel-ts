@@ -9,5 +9,7 @@ export default {
 		name: 'channel',
 		sourcemap: true,
 	},
-	plugins: [typescript()],
+	plugins: [
+		typescript()
+	],
 }

@@ -1,79 +1,83 @@
 import { Channel } from './channel'
-import { CancelableDeferred } from './deferred'
+import { Deferred } from './deferred'
+import { CanceledError } from './errors'
 
-class OpCtx {
-	tick(fn: () => void): boolean {
-		if (!this.#done) {
-			this.#done = true
-			this.beforeTick()
-			fn()
-			return true
-		} else {
-			return false
-		}
-	}
-
-	beforeTick: () => void = () => {}
-
-	#done = false
+interface OpCtx {
+	origin: Promise<void>
+	next: Promise<void>
 }
 
 interface Op {
 	isReady(): boolean
 
-	execute(ctx: OpCtx): Promise<void>
+	execute(): {
+		origin: Promise<void>
+		next: Promise<void>
+	}
 }
 
 class RecvOp<T> implements Op {
 	constructor(channel: Channel<T>, onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)) {
-		this.onCommit = onCommit
 		this.#channel = channel
+		this.#onCommit = onCommit
 	}
 
 	isReady(): boolean {
 		return this.#channel.length > 0
 	}
 
-	execute(ctx: OpCtx): Promise<void> {
+	execute(): OpCtx {
 		const d = this.#channel.recv()
-		d.then(
-			(v) => ctx.tick(() => this.onCommit?.(true, v)),
-			() => ctx.tick(() => this.onCommit?.(false, null))
-		)
-
-		return d as Promise<void>
+		return {
+			origin: d as Promise<void>,
+			next: d.then(
+				(v) => this.#onCommit?.(true, v),
+				(err: unknown) => {
+					if(err instanceof CanceledError){
+						return
+					}
+	
+					this.#onCommit?.(false, null)
+				}
+			),
+		}
 	}
 
-	onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)
-
 	#channel: Channel<T>
+	#onCommit?: ((ok: true, value: T) => void) & ((ok: false, value: null) => void)
 }
 
 class SendOp<T> implements Op {
 	constructor(channel: Channel<T>, value: T, onCommit?: (ok: boolean) => void) {
-		this.onCommit = onCommit
 		this.#channel = channel
 		this.#value = value
+		this.#onCommit = onCommit
 	}
 
 	isReady(): boolean {
 		return this.#channel.length < this.#channel.capacity
 	}
 
-	execute(ctx: OpCtx): Promise<void> {
+	execute(): OpCtx {
 		const d = this.#channel.send(this.#value)
-		d.then(
-			(v) => ctx.tick(() => this.onCommit?.(true)),
-			() => ctx.tick(() => this.onCommit?.(false))
-		)
-
-		return d
+		return {
+			origin: d,
+			next: d.then(
+				() => this.#onCommit?.(true),
+				(err: unknown) => {
+					if(err instanceof CanceledError){
+						return
+					}
+					
+					this.#onCommit?.(false)
+				}
+			),
+		}
 	}
-
-	onCommit?: (ok: boolean) => void
 
 	#channel: Channel<T>
 	#value: T
+	#onCommit?: (ok: boolean) => void
 }
 
 /**
@@ -144,35 +148,39 @@ export function send<T>(channel: Channel<T>, value: T, onCommit?: (ok: boolean) 
  * @param ops - Operations to wait.
  * @param fallback - Invoked if all operations in `ops` are not ready.
  */
-export async function select(ops: Op[], fallback?: () => void
-): Promise<void> {
-	const ctx = new OpCtx()
+export function select(ops: Op[], fallback?: () => void): Promise<void> {
 	for (const op of ops) {
-		if (op.isReady()) {
-			await op.execute(ctx)
-			return
+		if (!op.isReady()) {
+			continue
 		}
+
+		return op.execute().next
 	}
 
 	if (fallback !== undefined) {
 		fallback()
-		return
+		return Promise.resolve()
 	}
 
-	const ds: CancelableDeferred<unknown>[] = []
-	const cancel = () => ds.forEach((d) => d.cancel())
-
-	ctx.beforeTick = cancel
+	const origins: Deferred<void>[] = []
+	const commits: Promise<void>[] = []
+	const cancel = () => origins.forEach((d) => {
+		if(d.isSettled){
+			return
+		}
+		d.reject(new CanceledError())
+	})
 
 	for (const op of ops) {
-		const d = op.execute(ctx)
-		if (!(d instanceof CancelableDeferred)) {
+		const { origin, next } = op.execute()
+		if (!(origin instanceof Deferred)) {
 			throw new Error('logic error: expected that the operation is deferred')
 		}
 
-		d.beforeResolve = cancel
-		ds.push(d)
+		origin.onSettled = cancel
+		origins.push(origin as Deferred<void>)
+		commits.push(next)
 	}
 
-	await Promise.race(ds).catch(() => {})
+	return Promise.race(commits).catch(() => {})
 }

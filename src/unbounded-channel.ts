@@ -1,5 +1,6 @@
 import { ClosedError } from './errors'
-import { CancelableDeferred } from './deferred'
+import { Deferred } from './deferred'
+import { RecvTask } from './task'
 import { Channel } from './channel'
 
 export class UnboundedChannel<T> implements Channel<T> {
@@ -14,12 +15,11 @@ export class UnboundedChannel<T> implements Channel<T> {
 		this.#throwIfClosed()
 
 		if (this.#buffer.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return Promise.resolve(this.#buffer.shift()!)
 		}
 
-		const d = new CancelableDeferred<T>()
-		this.#receivers.push(d)
+		const d = new Deferred<T>()
+		this.#recvTasks.push(new RecvTask(d))
 
 		return d
 	}
@@ -27,13 +27,12 @@ export class UnboundedChannel<T> implements Channel<T> {
 	send(value: T): Promise<void> {
 		this.#throwIfClosed()
 
-		while (this.#receivers.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const d = this.#receivers.shift()!
-			if (d.isCanceled) {
+		while (this.#recvTasks.length > 0) {
+			const t = this.#recvTasks.shift()!
+			if (t.isSettled) {
 				continue
 			} else {
-				d.resolve(value)
+				t.execute(value)
 				return Promise.resolve()
 			}
 		}
@@ -46,15 +45,15 @@ export class UnboundedChannel<T> implements Channel<T> {
 		this.#isClosed = true
 		this.#buffer = []
 
-		for (const d of this.#receivers) {
-			if (d.isCanceled) {
+		for (const t of this.#recvTasks) {
+			if (t.isSettled) {
 				continue
 			} else {
-				d.reject(new ClosedError())
+				t.abort(new ClosedError())
 			}
 		}
 
-		this.#receivers = []
+		this.#recvTasks = []
 
 		return Promise.resolve()
 	}
@@ -79,9 +78,9 @@ export class UnboundedChannel<T> implements Channel<T> {
 	}
 
 	get length(): number {
-		this.#receivers = this.#receivers.filter((d) => !d.isCanceled)
+		this.#recvTasks = this.#recvTasks.filter((d) => !d.isSettled)
 
-		return this.#buffer.length - this.#receivers.length
+		return this.#buffer.length - this.#recvTasks.length
 	}
 
 	#throwIfClosed() {
@@ -92,5 +91,5 @@ export class UnboundedChannel<T> implements Channel<T> {
 
 	#isClosed = false
 	#buffer: T[] = []
-	#receivers: CancelableDeferred<T>[] = []
+	#recvTasks: RecvTask<T>[] = []
 }

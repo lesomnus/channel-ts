@@ -1,5 +1,3 @@
-import { CanceledError } from './errors'
-
 export class Deferred<T> implements Promise<T> {
 	constructor() {
 		let resolve_ = (value: T) => {}
@@ -12,6 +10,10 @@ export class Deferred<T> implements Promise<T> {
 
 		this.#resolve = resolve_
 		this.#reject = reject_
+	}
+
+	get isSettled(): boolean {
+		return this.#isSettled
 	}
 
 	then<TResult1 = T, TResult2 = never>(
@@ -32,57 +34,23 @@ export class Deferred<T> implements Promise<T> {
 	}
 
 	resolve(value: T): void {
-		this.beforeResolve()
+		this.#isSettled = true
+		this.onSettled()
 		this.#resolve(value)
 	}
 
 	reject(reason?: unknown): void {
+		this.#isSettled = true
+		this.onSettled()
 		this.#reject(reason)
 	}
 
 	readonly [Symbol.toStringTag] = 'Deferred'
 
-	beforeResolve: () => void = () => {}
+	onSettled: () => void = () => {}
 
+	#isSettled = false
 	#resolve: (value: T) => void
 	#reject: (reason?: unknown) => void
 	#promise: Promise<T>
-}
-
-export class CancelableDeferred<T> extends Deferred<T> {
-	constructor(onCanceled?: () => void) {
-		super()
-
-		this.#onCanceled = onCanceled ?? (() => {})
-	}
-
-	resolve(value: T): void {
-		this.#throwIfCanceled()
-		super.resolve(value)
-	}
-
-	reject(reason?: unknown): void {
-		this.#throwIfCanceled()
-		super.reject(reason)
-	}
-
-	get isCanceled(): boolean {
-		return this.#isCanceled
-	}
-
-	cancel() {
-		if (!this.#isCanceled) {
-			this.#isCanceled = true
-			this.#onCanceled()
-		}
-	}
-
-	#throwIfCanceled() {
-		if (this.#isCanceled) {
-			throw new CanceledError()
-		}
-	}
-
-	#isCanceled = false
-	#onCanceled: () => void
 }

@@ -1,18 +1,14 @@
 import { ClosedError } from './errors'
-import { CancelableDeferred } from './deferred'
+import { Deferred } from './deferred'
+import { RecvTask, SendTask } from './task'
+import { CircularQueue } from './circular-queue'
 import { Channel } from './channel'
 
 export class BoundedChannel<T> implements Channel<T> {
 	static from<T>(iterable: Iterable<T> | ArrayLike<T>, capacity?: number): BoundedChannel<T> {
-		const buffer = Array.from(iterable)
-		if (capacity === undefined) {
-			capacity = buffer.length
-		} else if (capacity < buffer.length) {
-			throw new RangeError('capacity must be equal or greater than length of the iterable')
-		}
-
-		const c = new BoundedChannel<T>(capacity)
-		c.#buffer = buffer
+		const q = CircularQueue.from(iterable, capacity)
+		const c = new BoundedChannel<T>(q.capacity)
+		c.#buffer = q
 
 		return c
 	}
@@ -22,32 +18,53 @@ export class BoundedChannel<T> implements Channel<T> {
 			throw new Error('capacity cannot be negative')
 		}
 
-		this.#capacity = capacity
+		this.#buffer = new CircularQueue<T>(capacity)
+	}
+
+	get capacity(): number {
+		return this.#buffer.capacity
+	}
+
+	get length(): number {
+		this.#recvTasks = this.#recvTasks.filter((t) => !t.isSettled)
+		this.#sendTasks = this.#sendTasks.filter((t) => !t.isSettled)
+
+		return this.#buffer.length + this.#sendTasks.length - this.#recvTasks.length
 	}
 
 	recv(): Promise<T> {
 		this.#throwIfClosed()
 
-		while (this.#senders.length > 0) {
-			const d = this.#senders.shift()!
-			if (d.isCanceled) {
+		if (this.#buffer.length > 0) {
+			const v = this.#buffer.shift()
+			const p = Promise.resolve(v)
+
+			while (this.#sendTasks.length > 0) {
+				const t = this.#sendTasks.shift()!
+				if (t.isSettled) {
+					continue
+				}
+				
+				const v = t.execute()
+				this.#buffer.push(v)
+				break
+			}
+
+			return p
+		}
+
+		while (this.#sendTasks.length > 0) {
+			const t = this.#sendTasks.shift()!
+			if (t.isSettled) {
 				continue
 			}
 
-			d.resolve()
-			if (this.#capacity === 0) {
-				return new Promise<T>((resolve) => {
-					d.then(() => resolve(this.#buffer.shift()!))
-				})
-			}
+			const v = t.execute()
+			return Promise.resolve(v)
 		}
 
-		if (this.#buffer.length > 0) {
-			return Promise.resolve(this.#buffer.shift()!)
-		}
-
-		const d = new CancelableDeferred<T>()
-		this.#receivers.push(d)
+		const d = new Deferred<T>()
+		this.#recvTasks.push(new RecvTask(d))
 
 		return d
 	}
@@ -55,46 +72,40 @@ export class BoundedChannel<T> implements Channel<T> {
 	send(value: T): Promise<void> {
 		this.#throwIfClosed()
 
-		if (this.#buffer.length < this.#capacity) {
+		if (this.#buffer.length < this.capacity) {
 			this.#buffer.push(value)
 			return Promise.resolve()
 		}
 
-		while (this.#receivers.length > 0) {
-			const d = this.#receivers.shift()!
-			if (d.isCanceled) {
+		while (this.#recvTasks.length > 0) {
+			const t = this.#recvTasks.shift()!
+			if (t.isSettled) {
 				continue
 			} else {
-				d.resolve(value)
+				t.execute(value)
 				return Promise.resolve()
 			}
 		}
 
-		const d = new CancelableDeferred<void>()
-		d.then(() => this.#buffer.push(value)).catch((err) => {
-			if (!(err instanceof ClosedError)) {
-				throw new Error(`logic error: expected a ClosedError but was ${String(err)}`)
-			}
-		})
-		this.#senders.push(d)
+		const d = new Deferred<void>()
+		this.#sendTasks.push(new SendTask(value, d))
 
 		return d
 	}
 
 	close(): Promise<void> {
 		this.#isClosed = true
-		this.#buffer = []
 
-		for (const d of [...this.#receivers, ...this.#senders]) {
-			if (d.isCanceled) {
+		for (const t of [...this.#recvTasks, ...this.#sendTasks]) {
+			if (t.isSettled) {
 				continue
 			} else {
-				d.reject(new ClosedError())
+				t.abort(new ClosedError())
 			}
 		}
 
-		this.#receivers = []
-		this.#senders = []
+		this.#recvTasks = []
+		this.#sendTasks = []
 
 		return Promise.resolve()
 	}
@@ -114,17 +125,6 @@ export class BoundedChannel<T> implements Channel<T> {
 		}
 	}
 
-	get capacity(): number {
-		return this.#capacity
-	}
-
-	get length(): number {
-		this.#receivers = this.#receivers.filter((d) => !d.isCanceled)
-		this.#senders = this.#senders.filter((d) => !d.isCanceled)
-
-		return this.#buffer.length + this.#senders.length - this.#receivers.length
-	}
-
 	#throwIfClosed() {
 		if (this.#isClosed) {
 			throw new ClosedError()
@@ -132,8 +132,7 @@ export class BoundedChannel<T> implements Channel<T> {
 	}
 
 	#isClosed = false
-	#buffer: T[] = []
-	#receivers: CancelableDeferred<T>[] = []
-	#senders: CancelableDeferred<void>[] = []
-	#capacity: number
+	#buffer: CircularQueue<T>
+	#recvTasks: RecvTask<T>[] = []
+	#sendTasks: SendTask<T>[] = []
 }

@@ -3,8 +3,6 @@ import { Channel } from './channel'
 import { UnboundedChannel } from './unbounded-channel'
 import { BoundedChannel } from './bounded-channel'
 
-// type ChannelBuilder<T> = (capacity: number) => Channel<T>
-
 interface TestSuite {
 	name: string
 	make: <T>(capacity: number) => Channel<T>

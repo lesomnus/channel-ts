@@ -41,6 +41,8 @@ export interface Receiver<T> extends ChannelBase, AsyncIterable<T> {
 	 * Thrown if channel is closed.
 	 */
 	recv(): Promise<T>
+
+	// tryRecv(): {ok: false, value: undefined} | {ok: true, value: T}
 }
 
 /**
@@ -61,6 +63,8 @@ export interface Sender<T> extends ChannelBase {
 	 * Thrown if channel is closed.
 	 */
 	send(value: T): Promise<void>
+
+	// trySend(value: T): boolean
 }
 
 /**
